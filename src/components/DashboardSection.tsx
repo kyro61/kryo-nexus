@@ -255,7 +255,7 @@ export const DashboardSection: React.FC = () => {
 
           {/* Timeframe Filter Buttons */}
           <div className="flex items-center space-x-1 p-1 bg-black/40 rounded-xl border border-zinc-800 text-xs font-mono">
-            {(['24H', '7D', '30D', '1Y'] as const).map((tf) => (
+            {(['24H', '7D', '30D', '90D', '1Y'] as const).map((tf) => (
               <button
                 key={tf}
                 id={`timeframe-btn-${tf}`}
@@ -263,7 +263,7 @@ export const DashboardSection: React.FC = () => {
                   playSound('click');
                   setTimeframe(tf);
                 }}
-                className={`px-3 py-1 rounded-lg transition font-medium cursor-pointer ${
+                className={`px-2.5 sm:px-3 py-1 rounded-lg transition font-medium cursor-pointer ${
                   timeframe === tf
                     ? 'bg-cyan-500 text-black font-bold shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'

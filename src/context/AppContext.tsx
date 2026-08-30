@@ -43,6 +43,8 @@ interface AppContextType {
   setActiveSection: (section: string) => void;
 
   telemetry: SystemTelemetryState;
+  toggleSimulation: () => void;
+  injectFault: () => void;
   
   submissions: ContactSubmission[];
   addSubmission: (submission: Omit<ContactSubmission, 'id' | 'timestamp'>) => void;
@@ -57,9 +59,12 @@ const DEFAULT_SETTINGS: AppSettings = {
   reducedMotion: false,
   uiDensity: 'normal',
   enable3D: true,
-  soundFx: true,
+  soundFx: false,
   parallaxStrength: 0.7,
   showFpsCounter: true,
+  performanceMode: false,
+  customCursor: true,
+  demoNotifications: true,
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -254,7 +259,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
     renderLatencyMs: 1.2,
     uptimeSeconds: 8420,
     isOverclocked: false,
+    isSimulationLive: true,
+    activeSessions: 12840,
+    systemLoadPercent: 48.2,
+    networkThroughputGbps: 184.6,
   });
+
+  const toggleSimulation = () => {
+    setTelemetry((prev) => {
+      const nextState = !prev.isSimulationLive;
+      playSound(nextState ? 'switch' : 'click');
+      return { ...prev, isSimulationLive: nextState };
+    });
+  };
+
+  const injectFault = () => {
+    playSound('error');
+    setTelemetry((prev) => ({
+      ...prev,
+      systemLoadPercent: +(88 + Math.random() * 8).toFixed(1),
+      packetLossRate: +(0.004 + Math.random() * 0.002).toFixed(4),
+      renderLatencyMs: +(4.2 + Math.random() * 1.5).toFixed(2),
+      quantumCoherence: 96.4,
+    }));
+    simulateAlert();
+
+    // Auto heal after 2.5s
+    setTimeout(() => {
+      setTelemetry((prev) => ({
+        ...prev,
+        systemLoadPercent: 49.5,
+        packetLossRate: 0.0001,
+        renderLatencyMs: 1.2,
+        quantumCoherence: 99.98,
+      }));
+      playSound('success');
+    }, 2500);
+  };
 
   useEffect(() => {
     let frameCount = 0;
@@ -265,15 +306,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
       frameCount++;
       if (now - lastTime >= 1000) {
         const currentFps = Math.min(144, Math.round((frameCount * 1000) / (now - lastTime)));
-        setTelemetry((prev) => ({
-          ...prev,
-          fps: currentFps,
-          uptimeSeconds: prev.uptimeSeconds + 1,
-          memoryUsageMb: +(140 + Math.sin(now / 5000) * 12 + Math.random() * 2).toFixed(1),
-          quantumCoherence: +(99.94 + Math.random() * 0.05).toFixed(2),
-          renderLatencyMs: +(1.1 + Math.random() * 0.3).toFixed(2),
-          isOverclocked: isEasterEggOpen,
-        }));
+        setTelemetry((prev) => {
+          if (!prev.isSimulationLive) {
+            return {
+              ...prev,
+              fps: currentFps,
+              isOverclocked: isEasterEggOpen,
+            };
+          }
+
+          const loadJitter = (Math.random() - 0.5) * 3;
+          const sessionJitter = Math.floor((Math.random() - 0.5) * 16);
+          const throughputJitter = (Math.random() - 0.5) * 8;
+
+          return {
+            ...prev,
+            fps: currentFps,
+            uptimeSeconds: prev.uptimeSeconds + 1,
+            memoryUsageMb: +(140 + Math.sin(now / 5000) * 12 + Math.random() * 2).toFixed(1),
+            quantumCoherence: +(99.94 + Math.random() * 0.05).toFixed(2),
+            renderLatencyMs: +(1.1 + Math.random() * 0.3).toFixed(2),
+            systemLoadPercent: +Math.max(15, Math.min(95, prev.systemLoadPercent + loadJitter)).toFixed(1),
+            activeSessions: Math.max(1000, prev.activeSessions + sessionJitter),
+            networkThroughputGbps: +Math.max(50, Math.min(400, prev.networkThroughputGbps + throughputJitter)).toFixed(1),
+            isOverclocked: isEasterEggOpen,
+          };
+        });
         frameCount = 0;
         lastTime = now;
       }
@@ -283,6 +341,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     animId = requestAnimationFrame(calculateFps);
     return () => cancelAnimationFrame(animId);
   }, [isEasterEggOpen]);
+
+  // Periodic Demo Notifications Generator
+  useEffect(() => {
+    if (!settings.demoNotifications) return;
+
+    const interval = setInterval(() => {
+      if (Math.random() > 0.4) {
+        simulateAlert();
+      }
+    }, 45000);
+
+    return () => clearInterval(interval);
+  }, [settings.demoNotifications]);
 
   // 6. Submissions Storage
   const [submissions, setSubmissions] = useState<ContactSubmission[]>(() => {
@@ -424,6 +495,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         activeSection,
         setActiveSection,
         telemetry,
+        toggleSimulation,
+        injectFault,
         submissions,
         addSubmission,
         clearSubmissions,

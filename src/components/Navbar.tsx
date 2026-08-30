@@ -72,7 +72,7 @@ export const Navbar: React.FC = () => {
       setLastScrollY(currentScrollY);
 
       // Detect active section based on scroll position
-      const sections = ['hero', 'dashboard', 'modules', 'architecture', 'diagnostics', 'contact'];
+      const sections = ['hero', 'command-center', 'dashboard', 'modules', 'architecture', 'diagnostics', 'contact'];
       for (const sectionId of sections) {
         const el = document.getElementById(sectionId);
         if (el) {
@@ -91,6 +91,7 @@ export const Navbar: React.FC = () => {
 
   const navItems = [
     { id: 'hero', label: 'Nexus Core', icon: Cpu },
+    { id: 'command-center', label: 'Command Center', icon: Command },
     { id: 'dashboard', label: 'Telemetry', icon: Activity },
     { id: 'modules', label: 'Modules', icon: Layers },
     { id: 'architecture', label: 'Pipeline', icon: Zap },

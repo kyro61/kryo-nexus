@@ -15,8 +15,11 @@ import {
   BarChart3,
   Flame,
   CheckCircle,
+  TrendingUp,
+  Terminal,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { MagneticButton } from './MagneticButton';
 
 export const HeroSection: React.FC = () => {
   const {
@@ -30,22 +33,22 @@ export const HeroSection: React.FC = () => {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Mouse Parallax Springs
+  // Mouse Parallax Springs with smooth damping
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  const springConfig = { damping: 30, stiffness: 200, mass: 0.5 };
+  const springConfig = { damping: 25, stiffness: 180, mass: 0.4 };
   const smoothMouseX = useSpring(mouseX, springConfig);
   const smoothMouseY = useSpring(mouseY, springConfig);
 
   // Transform values for 3D UI depth
-  const rotateX = useTransform(smoothMouseY, [-0.5, 0.5], [12 * settings.parallaxStrength, -12 * settings.parallaxStrength]);
-  const rotateY = useTransform(smoothMouseX, [-0.5, 0.5], [-14 * settings.parallaxStrength, 14 * settings.parallaxStrength]);
-  const panelTranslateX = useTransform(smoothMouseX, [-0.5, 0.5], [-20 * settings.parallaxStrength, 20 * settings.parallaxStrength]);
-  const panelTranslateY = useTransform(smoothMouseY, [-0.5, 0.5], [-20 * settings.parallaxStrength, 20 * settings.parallaxStrength]);
+  const rotateX = useTransform(smoothMouseY, [-0.5, 0.5], [10 * settings.parallaxStrength, -10 * settings.parallaxStrength]);
+  const rotateY = useTransform(smoothMouseX, [-0.5, 0.5], [-12 * settings.parallaxStrength, 12 * settings.parallaxStrength]);
+  const panelTranslateX = useTransform(smoothMouseX, [-0.5, 0.5], [-16 * settings.parallaxStrength, 16 * settings.parallaxStrength]);
+  const panelTranslateY = useTransform(smoothMouseY, [-0.5, 0.5], [-16 * settings.parallaxStrength, 16 * settings.parallaxStrength]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!settings.enable3D || settings.reducedMotion) return;
+    if (!settings.enable3D || settings.reducedMotion || settings.performanceMode) return;
     const rect = containerRef.current?.getBoundingClientRect();
     if (rect) {
       const x = (e.clientX - rect.left) / rect.width - 0.5;
@@ -94,8 +97,8 @@ export const HeroSection: React.FC = () => {
       {/* Main 3D Interactive Stage */}
       <motion.div
         style={{
-          rotateX: settings.enable3D && !settings.reducedMotion ? rotateX : 0,
-          rotateY: settings.enable3D && !settings.reducedMotion ? rotateY : 0,
+          rotateX: settings.enable3D && !settings.reducedMotion && !settings.performanceMode ? rotateX : 0,
+          rotateY: settings.enable3D && !settings.reducedMotion && !settings.performanceMode ? rotateY : 0,
           transformStyle: 'preserve-3d',
         }}
         className="w-full max-w-6xl flex flex-col items-center relative z-10"
@@ -110,7 +113,7 @@ export const HeroSection: React.FC = () => {
           <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
           <span className="font-semibold tracking-wider">KRYO SPATIAL ENGINE</span>
           <span className="text-zinc-500">|</span>
-          <span className="text-zinc-400">CLUSTER STATUS: 100% OPERATIONAL</span>
+          <span className="text-zinc-400">CLUSTER STATUS: 100% ONLINE</span>
           <button
             onClick={handleTriggerBurst}
             className="ml-1 text-[11px] px-2 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-500/40 transition cursor-pointer active:scale-95"
@@ -121,7 +124,7 @@ export const HeroSection: React.FC = () => {
         </motion.div>
 
         {/* Hero Title & Subtext */}
-        <div className="text-center max-w-4xl mx-auto space-y-4 mb-10">
+        <div className="text-center max-w-4xl mx-auto space-y-4 mb-8">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -143,48 +146,48 @@ export const HeroSection: React.FC = () => {
             Autonomous neural pipelines, lock-free ring buffers, and sub-millisecond 3D spatial layout dispatch compiled in real time.
           </motion.p>
 
-          {/* Action CTAs */}
+          {/* Action CTAs using Magnetic Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
             className="flex flex-wrap items-center justify-center gap-4 pt-3"
           >
-            <button
+            <MagneticButton
               id="hero-primary-cta"
+              variant="primary"
+              size="md"
+              icon={<ArrowRight className="w-4 h-4" />}
+              iconPosition="right"
               onClick={() => {
-                playSound('switch');
-                const el = document.getElementById('dashboard');
+                const el = document.getElementById('command-center') || document.getElementById('dashboard');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold text-sm font-mono tracking-tight shadow-xl shadow-cyan-500/20 hover:shadow-cyan-400/30 transition-all duration-200 active:scale-95 flex items-center gap-2 cursor-pointer"
             >
-              <span>INSPECT LIVE TELEMETRY</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+              COMMAND CENTER
+            </MagneticButton>
 
-            <button
+            <MagneticButton
               id="hero-secondary-cta"
-              onClick={() => {
-                playSound('switch');
-                setIsCommandCenterOpen(true);
-              }}
-              className="px-5 py-3 rounded-xl glass-panel hover:bg-zinc-800/80 text-zinc-200 font-medium text-sm font-mono border border-zinc-700/60 hover:border-zinc-500 transition-all duration-200 active:scale-95 flex items-center gap-2 cursor-pointer"
+              variant="secondary"
+              size="md"
+              icon={<Command className="w-4 h-4 text-cyan-400" />}
+              iconPosition="left"
+              onClick={() => setIsCommandCenterOpen(true)}
             >
-              <Command className="w-4 h-4 text-cyan-400" />
-              <span>COMMAND PALETTE (⌘K)</span>
-            </button>
+              COMMAND PALETTE (⌘K)
+            </MagneticButton>
           </motion.div>
         </div>
 
         {/* Interactive Floating HUD Dashboard Interface (Physical 3D Object) */}
         <motion.div
           style={{
-            x: settings.enable3D && !settings.reducedMotion ? panelTranslateX : 0,
-            y: settings.enable3D && !settings.reducedMotion ? panelTranslateY : 0,
+            x: settings.enable3D && !settings.reducedMotion && !settings.performanceMode ? panelTranslateX : 0,
+            y: settings.enable3D && !settings.reducedMotion && !settings.performanceMode ? panelTranslateY : 0,
             transformStyle: 'preserve-3d',
           }}
-          className="w-full glass-panel rounded-2xl p-4 sm:p-6 border border-zinc-700/60 shadow-2xl shadow-black/80 mt-4 relative overflow-hidden"
+          className="w-full glass-panel rounded-2xl p-4 sm:p-6 border border-zinc-700/60 shadow-2xl shadow-black/80 mt-2 relative overflow-hidden"
         >
           {/* Top HUD Toolbar */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 pb-4 mb-6">
@@ -237,7 +240,7 @@ export const HeroSection: React.FC = () => {
                   <span>NODE TOPOLOGY</span>
                 </div>
                 <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/40">
-                  24 ACTIVE
+                  {activeNodesMap.length} ACTIVE
                 </span>
               </div>
 
@@ -269,7 +272,7 @@ export const HeroSection: React.FC = () => {
 
               <div className="text-[10px] text-zinc-500 font-mono flex justify-between mt-3 pt-2 border-t border-zinc-800/60">
                 <span>CLICK NODES TO TOGGLE</span>
-                <span className="text-zinc-400">{(activeNodesMap.length / 24 * 100).toFixed(0)}% LOAD</span>
+                <span className="text-zinc-400">{Math.round((activeNodesMap.length / 24) * 100)}% LOAD</span>
               </div>
             </div>
 
@@ -281,7 +284,7 @@ export const HeroSection: React.FC = () => {
                   <span>THROUGHPUT BUFFER</span>
                 </div>
                 <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">
-                  14.8 TB/s
+                  {telemetry.networkThroughputGbps} Gbps
                 </span>
               </div>
 
@@ -289,7 +292,7 @@ export const HeroSection: React.FC = () => {
                 <div>
                   <div className="flex justify-between text-xs font-mono text-zinc-400 mb-1">
                     <span>L3 Ring Buffer</span>
-                    <span className="text-zinc-200">72%</span>
+                    <span className="text-zinc-200">{burstActive ? '94%' : '72%'}</span>
                   </div>
                   <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
                     <motion.div
@@ -406,3 +409,4 @@ export const HeroSection: React.FC = () => {
     </section>
   );
 };
+

@@ -9,8 +9,11 @@ export interface AppSettings {
   uiDensity: UIDensity;
   enable3D: boolean;
   soundFx: boolean;
-  parallaxStrength: number; // 0.1 to 1.0
+  parallaxStrength: number; // 0.1 to 1.5
   showFpsCounter: boolean;
+  performanceMode: boolean;
+  customCursor: boolean;
+  demoNotifications: boolean;
 }
 
 export interface NotificationItem {
@@ -41,7 +44,7 @@ export interface SystemModule {
   iconName: string;
 }
 
-export type ChartTimeframe = '24H' | '7D' | '30D' | '1Y';
+export type ChartTimeframe = '24H' | '7D' | '30D' | '90D' | '1Y';
 export type MetricType = 'neural' | 'throughput' | 'latency' | 'efficiency';
 
 export interface ChartDataPoint {
@@ -83,4 +86,9 @@ export interface SystemTelemetryState {
   renderLatencyMs: number;
   uptimeSeconds: number;
   isOverclocked: boolean;
+  isSimulationLive: boolean;
+  activeSessions: number;
+  systemLoadPercent: number;
+  networkThroughputGbps: number;
 }
+

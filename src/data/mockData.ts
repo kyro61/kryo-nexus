@@ -162,6 +162,11 @@ export const CHART_DATA_SETS: Record<ChartTimeframe, ChartDataPoint[]> = {
     { time: 'W3', neural: 86.8, throughput: 14.9, latency: 2.4, efficiency: 89.2 },
     { time: 'W4', neural: 94.3, throughput: 16.8, latency: 2.8, efficiency: 87.5 },
   ],
+  '90D': [
+    { time: 'Month 1', neural: 64.5, throughput: 9.8, latency: 2.2, efficiency: 90.5 },
+    { time: 'Month 2', neural: 81.2, throughput: 13.4, latency: 1.8, efficiency: 93.1 },
+    { time: 'Month 3', neural: 95.7, throughput: 16.9, latency: 1.3, efficiency: 96.2 },
+  ],
   '1Y': [
     { time: 'Q1', neural: 54.2, throughput: 7.9, latency: 2.6, efficiency: 88.2 },
     { time: 'Q2', neural: 68.7, throughput: 11.2, latency: 2.1, efficiency: 91.4 },

@@ -4,6 +4,7 @@ import { BootSequence } from './components/BootSequence';
 import { CustomCursor } from './components/CustomCursor';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
+import { CommandCenterSection } from './components/CommandCenterSection';
 import { DashboardSection } from './components/DashboardSection';
 import { ModulesSection } from './components/ModulesSection';
 import { ArchitectureSection } from './components/ArchitectureSection';
@@ -15,6 +16,7 @@ import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { SettingsModal } from './components/SettingsModal';
 import { NotificationCenter } from './components/NotificationCenter';
 import { EasterEggModal } from './components/EasterEggModal';
+import { ScrollProgressBar } from './components/ScrollProgressBar';
 
 function MainExperience() {
   const { settings } = useApp();
@@ -34,6 +36,9 @@ function MainExperience() {
 
   return (
     <div className={`min-h-screen transition-colors duration-500 font-sans ${getThemeClass()} overflow-x-hidden relative`}>
+      {/* Scroll Progress Bar at the top */}
+      <ScrollProgressBar />
+
       {/* Booting Sequence */}
       <BootSequence />
 
@@ -46,6 +51,7 @@ function MainExperience() {
       {/* Main Sections */}
       <main className="relative z-10">
         <HeroSection />
+        <CommandCenterSection />
         <DashboardSection />
         <ModulesSection />
         <ArchitectureSection />
