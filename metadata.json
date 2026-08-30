@@ -1,0 +1,6 @@
+{
+  "name": "KRYO Nexus — Cinematic Interactive Experience",
+  "description": "A futuristic, high-performance interactive web application featuring 3D dynamic interfaces, real-time telemetry dashboards, command center, and fluid tactile UI systems.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
