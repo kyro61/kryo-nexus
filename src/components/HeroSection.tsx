@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
+import { motion, useMotionValue, useSpring, useTransform, useScroll } from 'motion/react';
 import {
   Cpu,
   Zap,
@@ -8,15 +8,15 @@ import {
   Shield,
   ArrowRight,
   Command,
-  Play,
-  RotateCcw,
-  Sparkles,
   Radio,
   BarChart3,
   Flame,
   CheckCircle,
   TrendingUp,
   Terminal,
+  ChevronDown,
+  Sparkles,
+  Sliders,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { MagneticButton } from './MagneticButton';
@@ -32,25 +32,45 @@ export const HeroSection: React.FC = () => {
     triggerEasterEgg,
   } = useApp();
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  // Scroll Parallax for 3D Camera Travel
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end start'],
+  });
+
+  const cameraScale = useTransform(scrollYProgress, [0, 1], [1, 0.82]);
+  const cameraZ = useTransform(scrollYProgress, [0, 1], [0, -320]);
+  const typographyY = useTransform(scrollYProgress, [0, 1], [0, -80]);
+  const typographyOpacity = useTransform(scrollYProgress, [0, 0.85], [1, 0.15]);
+  const hudY = useTransform(scrollYProgress, [0, 1], [0, 120]);
 
   // Mouse Parallax Springs with smooth damping
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  const springConfig = { damping: 25, stiffness: 180, mass: 0.4 };
+  const springConfig = { damping: 30, stiffness: 200, mass: 0.35 };
   const smoothMouseX = useSpring(mouseX, springConfig);
   const smoothMouseY = useSpring(mouseY, springConfig);
 
-  // Transform values for 3D UI depth
-  const rotateX = useTransform(smoothMouseY, [-0.5, 0.5], [10 * settings.parallaxStrength, -10 * settings.parallaxStrength]);
-  const rotateY = useTransform(smoothMouseX, [-0.5, 0.5], [-12 * settings.parallaxStrength, 12 * settings.parallaxStrength]);
-  const panelTranslateX = useTransform(smoothMouseX, [-0.5, 0.5], [-16 * settings.parallaxStrength, 16 * settings.parallaxStrength]);
-  const panelTranslateY = useTransform(smoothMouseY, [-0.5, 0.5], [-16 * settings.parallaxStrength, 16 * settings.parallaxStrength]);
+  // Transform values for 3D UI depth & kinetic typography
+  const rotateX = useTransform(
+    smoothMouseY,
+    [-0.5, 0.5],
+    [12 * settings.parallaxStrength, -12 * settings.parallaxStrength]
+  );
+  const rotateY = useTransform(
+    smoothMouseX,
+    [-0.5, 0.5],
+    [-14 * settings.parallaxStrength, 14 * settings.parallaxStrength]
+  );
+  const typoShiftX = useTransform(smoothMouseX, [-0.5, 0.5], [-22, 22]);
+  const typoShiftY = useTransform(smoothMouseY, [-0.5, 0.5], [-18, 18]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!settings.enable3D || settings.reducedMotion || settings.performanceMode) return;
-    const rect = containerRef.current?.getBoundingClientRect();
+    const rect = sectionRef.current?.getBoundingClientRect();
     if (rect) {
       const x = (e.clientX - rect.left) / rect.width - 0.5;
       const y = (e.clientY - rect.top) / rect.height - 0.5;
@@ -65,7 +85,7 @@ export const HeroSection: React.FC = () => {
   };
 
   // Interactive Live Simulated Node Grid state
-  const [activeNodesMap, setActiveNodesMap] = useState<number[]>([1, 4, 7, 12, 15, 18, 22]);
+  const [activeNodesMap, setActiveNodesMap] = useState<number[]>([0, 2, 5, 7, 11, 14, 17, 21]);
   const [burstActive, setBurstActive] = useState(false);
   const [activeCore, setActiveCore] = useState<'NEURAL' | 'SPATIAL' | 'QUANTUM'>('NEURAL');
 
@@ -73,105 +93,166 @@ export const HeroSection: React.FC = () => {
   const handleTriggerBurst = () => {
     playSound('switch');
     setBurstActive(true);
-    // Shuffle active nodes
-    const randomNodes = Array.from({ length: 12 }, () => Math.floor(Math.random() * 24));
+    const randomNodes = Array.from({ length: 14 }, () => Math.floor(Math.random() * 24));
     setActiveNodesMap(randomNodes);
     simulateAlert();
 
     setTimeout(() => {
       setBurstActive(false);
       playSound('success');
-    }, 900);
+    }, 850);
+  };
+
+  const scrollToNext = () => {
+    playSound('switch');
+    const el = document.getElementById('command-center') || document.getElementById('dashboard');
+    if (el) {
+      const offset = 70;
+      const pos = el.getBoundingClientRect().top + window.pageYOffset - offset;
+      window.scrollTo({ top: pos, behavior: 'smooth' });
+    }
   };
 
   return (
     <section
       id="hero"
-      ref={containerRef}
+      ref={sectionRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="relative min-h-[92vh] pt-28 pb-16 px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center overflow-hidden perspective-1000 select-none"
+      className="relative min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8 flex flex-col justify-between items-center overflow-hidden perspective-1000 select-none"
     >
-      {/* Subtle background coordinate lattice (structural, not floating particles) */}
-      <div className="absolute inset-0 tech-grid-subtle opacity-30 pointer-events-none" />
+      {/* Precision Corner Technical HUD Marks */}
+      <div className="absolute top-20 left-6 sm:left-10 font-mono text-[10px] text-zinc-500 tracking-wider hidden sm:block pointer-events-none z-20">
+        <div className="flex items-center gap-2 text-cyan-400/80 mb-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+          <span>KRYO MATRIX // SYSTEM 01</span>
+        </div>
+        <div className="text-zinc-600">LOC: 37.7749° N, 122.4194° W</div>
+        <div className="text-zinc-600">KERNEL: QUANTUM-COS v4.0</div>
+      </div>
 
-      {/* Main 3D Interactive Stage */}
+      <div className="absolute top-20 right-6 sm:right-10 font-mono text-[10px] text-zinc-500 tracking-wider text-right hidden sm:block pointer-events-none z-20">
+        <div className="text-emerald-400/90 font-bold mb-1">STATUS // 100% ONLINE</div>
+        <div className="text-zinc-600">RENDER FREQ // {telemetry.fps} FPS</div>
+        <div className="text-zinc-600">LATENCY // {telemetry.renderLatencyMs}ms</div>
+      </div>
+
+      {/* Main 3D Camera Stage */}
       <motion.div
         style={{
+          scale: !settings.reducedMotion ? cameraScale : 1,
+          translateZ: !settings.reducedMotion ? cameraZ : 0,
           rotateX: settings.enable3D && !settings.reducedMotion && !settings.performanceMode ? rotateX : 0,
           rotateY: settings.enable3D && !settings.reducedMotion && !settings.performanceMode ? rotateY : 0,
           transformStyle: 'preserve-3d',
         }}
-        className="w-full max-w-6xl flex flex-col items-center relative z-10"
+        className="w-full max-w-7xl flex flex-col items-center justify-center my-auto relative z-10 pt-4"
       >
-        {/* Top Operational Status Pill */}
+        {/* Giant Kinetic Typography Container */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-zinc-900/80 border border-cyan-500/30 text-xs font-mono text-cyan-300 shadow-lg shadow-cyan-950/20 mb-8 backdrop-blur-md"
+          style={{
+            y: typographyY,
+            opacity: typographyOpacity,
+            x: typoShiftX,
+          }}
+          className="relative text-center w-full flex flex-col items-center select-none"
         >
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-          <span className="font-semibold tracking-wider">KRYO SPATIAL ENGINE</span>
-          <span className="text-zinc-500">|</span>
-          <span className="text-zinc-400">CLUSTER STATUS: 100% ONLINE</span>
-          <button
-            onClick={handleTriggerBurst}
-            className="ml-1 text-[11px] px-2 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-500/40 transition cursor-pointer active:scale-95"
-            title="Inject simulated load burst"
+          {/* Sub-Header Technical Tag */}
+          <motion.div
+            initial={{ opacity: 0, y: -16, filter: 'blur(8px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.7, delay: 0.15 }}
+            className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-zinc-950/80 border border-cyan-500/30 text-xs font-mono text-cyan-300 shadow-xl shadow-cyan-950/30 mb-4 backdrop-blur-md"
           >
-            {burstActive ? 'BURSTING...' : 'PULSE'}
-          </button>
-        </motion.div>
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+            <span className="font-bold tracking-widest">NEXUS CORE 04.0</span>
+            <span className="text-zinc-600">/</span>
+            <span className="text-zinc-400">AUTONOMOUS SPATIAL MATRIX</span>
+            <button
+              onClick={handleTriggerBurst}
+              className="ml-1 text-[10px] px-2 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-500/40 transition cursor-pointer active:scale-95"
+              title="Inject load burst into cluster"
+            >
+              {burstActive ? 'BURSTING...' : 'PULSE'}
+            </button>
+          </motion.div>
 
-        {/* Hero Title & Subtext */}
-        <div className="text-center max-w-4xl mx-auto space-y-4 mb-8">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.08] font-display"
-          >
-            THE LIVING INTERFACE{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-400">
-              ARCHITECTURE.
-            </span>
-          </motion.h1>
+          {/* THE GIANT KRYO DISPLAY HEADING */}
+          <div className="relative group cursor-default py-2">
+            {/* Background Depth Glint behind typography */}
+            <div className="absolute inset-0 -inset-x-12 bg-gradient-to-r from-cyan-500/0 via-cyan-500/10 to-sky-500/0 blur-2xl pointer-events-none rounded-full opacity-60" />
 
+            <motion.h1
+              initial={{ opacity: 0, scale: 0.94, filter: 'blur(12px)' }}
+              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              transition={{ duration: 0.9, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="text-7xl sm:text-9xl md:text-[11rem] lg:text-[14rem] font-black tracking-tighter text-white font-display leading-none flex items-center justify-center gap-1 sm:gap-2 drop-shadow-2xl"
+            >
+              {['K', 'R', 'Y', 'O'].map((char, index) => (
+                <motion.span
+                  key={char}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.7,
+                    delay: 0.3 + index * 0.08,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  whileHover={{
+                    scale: 1.05,
+                    color: '#38bdf8',
+                    transition: { duration: 0.15 },
+                  }}
+                  className="inline-block transition-colors cursor-pointer"
+                >
+                  {char}
+                </motion.span>
+              ))}
+            </motion.h1>
+
+            {/* NEXUS Spaced Sub-Label */}
+            <motion.div
+              initial={{ opacity: 0, letterSpacing: '0.2em' }}
+              animate={{ opacity: 1, letterSpacing: '0.55em' }}
+              transition={{ duration: 1, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="text-sm sm:text-xl md:text-2xl font-mono text-cyan-400 font-bold uppercase tracking-[0.55em] mt-1 sm:mt-2 text-center pl-[0.55em]"
+            >
+              N E X U S
+            </motion.div>
+          </div>
+
+          {/* Cinematic Tagline */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto font-normal leading-relaxed"
+            transition={{ duration: 0.7, delay: 0.75 }}
+            className="text-sm sm:text-base md:text-lg text-zinc-400 max-w-xl mx-auto font-normal leading-relaxed mt-4 px-4"
           >
-            Autonomous neural pipelines, lock-free ring buffers, and sub-millisecond 3D spatial layout dispatch compiled in real time.
+            A sub-millisecond digital operating environment. Built for autonomous neural pipelines, spatial workloads, and zero-latency cluster synchronization.
           </motion.p>
 
           {/* Action CTAs using Magnetic Buttons */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="flex flex-wrap items-center justify-center gap-4 pt-3"
+            transition={{ duration: 0.7, delay: 0.85 }}
+            className="flex flex-wrap items-center justify-center gap-3.5 pt-6"
           >
             <MagneticButton
-              id="hero-primary-cta"
+              id="hero-enter-cta"
               variant="primary"
-              size="md"
+              size="lg"
               icon={<ArrowRight className="w-4 h-4" />}
               iconPosition="right"
-              onClick={() => {
-                const el = document.getElementById('command-center') || document.getElementById('dashboard');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
+              onClick={scrollToNext}
             >
-              COMMAND CENTER
+              ENTER NEXUS
             </MagneticButton>
 
             <MagneticButton
-              id="hero-secondary-cta"
+              id="hero-command-cta"
               variant="secondary"
-              size="md"
+              size="lg"
               icon={<Command className="w-4 h-4 text-cyan-400" />}
               iconPosition="left"
               onClick={() => setIsCommandCenterOpen(true)}
@@ -182,7 +263,7 @@ export const HeroSection: React.FC = () => {
             <MagneticButton
               id="hero-terminal-cta"
               variant="ghost"
-              size="md"
+              size="lg"
               icon={<Terminal className="w-4 h-4 text-emerald-400" />}
               iconPosition="left"
               onClick={() => setIsTerminalOpen(true)}
@@ -190,32 +271,34 @@ export const HeroSection: React.FC = () => {
               TERMINAL (T)
             </MagneticButton>
           </motion.div>
-        </div>
+        </motion.div>
 
-        {/* Interactive Floating HUD Dashboard Interface (Physical 3D Object) */}
+        {/* Floating Interactive 3D Command Deck (HUD Object) */}
         <motion.div
           style={{
-            x: settings.enable3D && !settings.reducedMotion && !settings.performanceMode ? panelTranslateX : 0,
-            y: settings.enable3D && !settings.reducedMotion && !settings.performanceMode ? panelTranslateY : 0,
+            y: hudY,
             transformStyle: 'preserve-3d',
           }}
-          className="w-full glass-panel rounded-2xl p-4 sm:p-6 border border-zinc-700/60 shadow-2xl shadow-black/80 mt-2 relative overflow-hidden"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.9 }}
+          className="w-full max-w-5xl glass-panel rounded-2xl p-4 sm:p-6 border border-zinc-700/60 shadow-2xl shadow-black/80 mt-10 relative overflow-hidden"
         >
-          {/* Top HUD Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 pb-4 mb-6">
+          {/* Deck Header */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 pb-4 mb-5">
             <div className="flex items-center space-x-3">
               <div className="flex space-x-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
               </div>
-              <span className="text-xs font-mono text-zinc-400 border-l border-zinc-800 pl-3">
-                NODE_ARRAY://CLUSTER-01 • US-EAST
+              <span className="text-xs font-mono text-zinc-300 border-l border-zinc-800 pl-3">
+                PRIMARY MATRIX DECK // CLUSTER-01
               </span>
             </div>
 
             {/* Core Mode Switcher */}
-            <div className="flex items-center p-1 bg-black/40 rounded-lg border border-zinc-800 text-xs font-mono">
+            <div className="flex items-center p-1 bg-black/50 rounded-lg border border-zinc-800 text-xs font-mono">
               {(['NEURAL', 'SPATIAL', 'QUANTUM'] as const).map((core) => (
                 <button
                   key={core}
@@ -237,27 +320,27 @@ export const HeroSection: React.FC = () => {
             <div className="flex items-center gap-3 text-xs font-mono text-zinc-400">
               <span className="flex items-center gap-1.5">
                 <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-                <span>SYNC RATE: 120Hz</span>
+                <span>COHERENCE: {telemetry.quantumCoherence}%</span>
               </span>
             </div>
           </div>
 
           {/* Grid of 4 Interactive HUD Sub-Panels */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* Panel 1: Real-time Node Matrix */}
-            <div className="p-4 rounded-xl bg-black/30 border border-zinc-800/80 hover:border-cyan-500/40 transition group">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-                  <Cpu className="w-4 h-4 text-cyan-400" />
-                  <span>NODE TOPOLOGY</span>
+            <div className="p-3.5 rounded-xl bg-black/40 border border-zinc-800/80 hover:border-cyan-500/40 transition">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-mono text-zinc-400">
+                  <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>NODE ARRAY</span>
                 </div>
-                <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/40">
-                  {activeNodesMap.length} ACTIVE
+                <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/40">
+                  {activeNodesMap.length} / 24
                 </span>
               </div>
 
-              {/* 24 Interactive Node Dots */}
-              <div className="grid grid-cols-6 gap-2 my-2">
+              {/* Interactive Node Matrix */}
+              <div className="grid grid-cols-6 gap-1.5 my-1.5">
                 {Array.from({ length: 24 }).map((_, i) => {
                   const isActive = activeNodesMap.includes(i);
                   return (
@@ -269,10 +352,10 @@ export const HeroSection: React.FC = () => {
                           prev.includes(i) ? prev.filter((n) => n !== i) : [...prev, i]
                         );
                       }}
-                      className={`h-5 rounded flex items-center justify-center text-[9px] font-mono transition-all cursor-pointer ${
+                      className={`h-4.5 rounded flex items-center justify-center text-[8px] font-mono transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-cyan-500 text-black font-bold shadow-sm shadow-cyan-400/50 scale-105'
-                          : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'
+                          ? 'bg-cyan-400 text-black font-bold shadow-sm shadow-cyan-400/50 scale-105'
+                          : 'bg-zinc-800/80 text-zinc-500 hover:bg-zinc-700'
                       }`}
                       title={`Toggle Node #${i + 1}`}
                     >
@@ -282,143 +365,137 @@ export const HeroSection: React.FC = () => {
                 })}
               </div>
 
-              <div className="text-[10px] text-zinc-500 font-mono flex justify-between mt-3 pt-2 border-t border-zinc-800/60">
-                <span>CLICK NODES TO TOGGLE</span>
-                <span className="text-zinc-400">{Math.round((activeNodesMap.length / 24) * 100)}% LOAD</span>
+              <div className="text-[9px] text-zinc-500 font-mono flex justify-between mt-2 pt-1.5 border-t border-zinc-800/60">
+                <span>INTERACTIVE NODES</span>
+                <span className="text-zinc-300">{Math.round((activeNodesMap.length / 24) * 100)}% LOAD</span>
               </div>
             </div>
 
             {/* Panel 2: Memory & Bandwidth Meter */}
-            <div className="p-4 rounded-xl bg-black/30 border border-zinc-800/80 hover:border-cyan-500/40 transition">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-                  <Activity className="w-4 h-4 text-emerald-400" />
-                  <span>THROUGHPUT BUFFER</span>
+            <div className="p-3.5 rounded-xl bg-black/40 border border-zinc-800/80 hover:border-cyan-500/40 transition">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-mono text-zinc-400">
+                  <Activity className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>BANDWIDTH</span>
                 </div>
-                <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">
+                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">
                   {telemetry.networkThroughputGbps} Gbps
                 </span>
               </div>
 
-              <div className="space-y-3 my-2">
+              <div className="space-y-2 py-1">
                 <div>
-                  <div className="flex justify-between text-xs font-mono text-zinc-400 mb-1">
-                    <span>L3 Ring Buffer</span>
-                    <span className="text-zinc-200">{burstActive ? '94%' : '72%'}</span>
+                  <div className="flex justify-between text-[10px] font-mono text-zinc-400 mb-1">
+                    <span>L3 Cache</span>
+                    <span className="text-zinc-200">{telemetry.memoryUsageMb} MB</span>
                   </div>
-                  <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                     <motion.div
                       className="h-full bg-gradient-to-r from-emerald-500 to-teal-400"
-                      initial={{ width: '60%' }}
-                      animate={{ width: burstActive ? '94%' : '72%' }}
+                      animate={{ width: `${(telemetry.memoryUsageMb / 512) * 100}%` }}
                       transition={{ duration: 0.4 }}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <div className="flex justify-between text-xs font-mono text-zinc-400 mb-1">
-                    <span>Quantum Coherence</span>
-                    <span className="text-cyan-300">{telemetry.quantumCoherence}%</span>
+                  <div className="flex justify-between text-[10px] font-mono text-zinc-400 mb-1">
+                    <span>Core Load</span>
+                    <span className="text-zinc-200">{telemetry.systemLoadPercent}%</span>
                   </div>
-                  <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-cyan-400"
-                      style={{ width: `${telemetry.quantumCoherence}%` }}
+                  <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-cyan-500 to-sky-400"
+                      animate={{ width: `${telemetry.systemLoadPercent}%` }}
+                      transition={{ duration: 0.4 }}
                     />
                   </div>
                 </div>
               </div>
-
-              <div className="text-[10px] text-zinc-500 font-mono flex justify-between mt-3 pt-2 border-t border-zinc-800/60">
-                <span>JITTER: &lt; 0.04ms</span>
-                <span className="text-emerald-400">OPTIMAL</span>
-              </div>
             </div>
 
-            {/* Panel 3: Live Waveform Oscilloscope */}
-            <div className="p-4 rounded-xl bg-black/30 border border-zinc-800/80 hover:border-cyan-500/40 transition">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-                  <BarChart3 className="w-4 h-4 text-sky-400" />
-                  <span>LATENCY WAVEFORM</span>
+            {/* Panel 3: Quantum Security State */}
+            <div className="p-3.5 rounded-xl bg-black/40 border border-zinc-800/80 hover:border-cyan-500/40 transition">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-mono text-zinc-400">
+                  <Shield className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>ENCRYPTION</span>
                 </div>
-                <span className="text-[11px] font-mono text-sky-400">
-                  {telemetry.renderLatencyMs}ms
+                <span className="text-[10px] font-mono text-indigo-400 bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-800/40">
+                  KYBER-1024
                 </span>
               </div>
 
-              {/* Dynamic SVG Waveform */}
-              <div className="h-16 w-full flex items-center justify-center my-1 bg-zinc-950/60 rounded-lg p-2 border border-zinc-800/40">
-                <svg className="w-full h-full overflow-visible" viewBox="0 0 100 30" preserveAspectRatio="none">
-                  <path
-                    d={
-                      burstActive
-                        ? 'M 0 15 Q 12 0, 25 15 T 50 15 T 75 15 T 100 15'
-                        : 'M 0 15 Q 10 7, 20 15 T 40 15 T 60 15 T 80 15 T 100 15'
-                    }
-                    fill="none"
-                    stroke="#38bdf8"
-                    strokeWidth="2"
-                    className="transition-all duration-300"
-                  />
-                  <path
-                    d="M 0 15 Q 15 22, 30 15 T 60 15 T 90 15 T 100 15"
-                    fill="none"
-                    stroke="#06b6d4"
-                    strokeWidth="1.5"
-                    strokeDasharray="2 2"
-                    opacity="0.6"
-                  />
-                </svg>
+              <div className="space-y-1.5 font-mono text-[10px]">
+                <div className="flex justify-between text-zinc-400">
+                  <span>Handshake:</span>
+                  <span className="text-emerald-400 font-semibold">VALIDATED</span>
+                </div>
+                <div className="flex justify-between text-zinc-400">
+                  <span>Entropy Pool:</span>
+                  <span className="text-zinc-200">100.0% PURE</span>
+                </div>
+                <div className="flex justify-between text-zinc-400">
+                  <span>Packet Loss:</span>
+                  <span className="text-zinc-200">{telemetry.packetLossRate}%</span>
+                </div>
               </div>
 
-              <div className="text-[10px] text-zinc-500 font-mono flex justify-between mt-2 pt-2 border-t border-zinc-800/60">
-                <span>FPS: {telemetry.fps}</span>
-                <span className="text-sky-400 font-medium">60 FPS LOCKED</span>
-              </div>
+              <button
+                onClick={() => {
+                  playSound('switch');
+                  simulateAlert();
+                }}
+                className="w-full mt-2.5 py-1 text-[10px] font-mono rounded bg-indigo-950/50 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-800/40 transition cursor-pointer"
+              >
+                ROTATE KEYS
+              </button>
             </div>
 
-            {/* Panel 4: Quick Action Protocol */}
-            <div className="p-4 rounded-xl bg-black/30 border border-zinc-800/80 hover:border-cyan-500/40 transition flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-                    <Shield className="w-4 h-4 text-purple-400" />
-                    <span>SYSTEM PROTOCOL</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-purple-300 bg-purple-950/60 px-1.5 py-0.5 rounded border border-purple-800/40">
-                    KYBER-1024
-                  </span>
+            {/* Panel 4: Active Engine Performance */}
+            <div className="p-3.5 rounded-xl bg-black/40 border border-zinc-800/80 hover:border-cyan-500/40 transition">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-mono text-zinc-400">
+                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                  <span>PERFORMANCE</span>
                 </div>
-                <p className="text-xs text-zinc-400 leading-relaxed font-sans mb-3">
-                  Hardware-grounded ephemeral encryption active on all client events.
-                </p>
+                <span className="text-[10px] font-mono text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40">
+                  TIER 3
+                </span>
               </div>
 
-              <div className="flex gap-2">
-                <button
-                  id="hero-burst-btn"
-                  onClick={handleTriggerBurst}
-                  className="flex-1 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-xs font-mono flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
-                >
-                  <Play className="w-3 h-3" />
-                  <span>BURST</span>
-                </button>
-                <button
-                  id="hero-overclock-btn"
-                  onClick={triggerEasterEgg}
-                  className="px-2.5 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 text-xs font-mono transition active:scale-95 cursor-pointer"
-                  title="Overclock Mode"
-                >
-                  <Flame className="w-3.5 h-3.5" />
-                </button>
+              <div className="text-center py-1">
+                <div className="text-2xl font-bold font-mono text-white">
+                  {telemetry.activeSessions.toLocaleString()}
+                </div>
+                <div className="text-[10px] font-mono text-zinc-400">Active Sync Streams</div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1.5 border-t border-zinc-800/60 text-[10px] font-mono text-zinc-400">
+                <span>SIMD Vector</span>
+                <span className="text-emerald-400">AVX-512</span>
               </div>
             </div>
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Scroll Down Prompt Indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.2, duration: 0.6 }}
+        onClick={scrollToNext}
+        className="flex flex-col items-center gap-1.5 cursor-pointer text-zinc-500 hover:text-cyan-400 transition-colors z-20 pb-2 select-none"
+      >
+        <span className="text-[10px] font-mono tracking-widest uppercase">EXPLORE ARCHITECTURE</span>
+        <motion.div
+          animate={{ y: [0, 5, 0] }}
+          transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+        >
+          <ChevronDown className="w-4 h-4" />
+        </motion.div>
+      </motion.div>
     </section>
   );
 };
-
