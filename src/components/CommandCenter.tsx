@@ -19,6 +19,7 @@ import {
   X,
   Volume2,
   VolumeX,
+  Terminal,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -37,6 +38,7 @@ export const CommandCenter: React.FC = () => {
     setIsCommandCenterOpen,
     setIsSettingsOpen,
     setIsNotificationsOpen,
+    setIsTerminalOpen,
     settings,
     updateSettings,
     rebootSystem,
@@ -108,6 +110,18 @@ export const CommandCenter: React.FC = () => {
       shortcut: 'G C',
       icon: Send,
       action: () => scrollTo('contact'),
+    },
+    {
+      id: 'cmd-act-terminal',
+      title: 'Open Interactive Quantum Shell Terminal',
+      category: 'System',
+      shortcut: 'T',
+      icon: Terminal,
+      action: () => {
+        setIsCommandCenterOpen(false);
+        setIsTerminalOpen(true);
+        playSound('switch');
+      },
     },
     {
       id: 'cmd-act-settings',

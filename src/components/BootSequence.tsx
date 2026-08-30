@@ -1,57 +1,75 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Terminal, Shield, Zap, Cpu, CheckCircle2, ChevronRight, Activity } from 'lucide-react';
+import { Cpu, CheckCircle2, ChevronRight, Zap } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-const BOOT_LOGS = [
-  { text: 'BIOS INITIALIZATION: KRYO-QUANTUM-HOST 0x88F0', delay: 100 },
-  { text: 'LOADING SPATIAL COMPUTE KERNEL v4.12.0...', delay: 250 },
-  { text: 'MOUNTING LOCK-FREE RING BUFFERS (64MB L3 CACHE)', delay: 400 },
-  { text: 'STARTING 4,096 AUTONOMOUS NEURAL vNODES...', delay: 580 },
-  { text: 'ESTABLISHING KYBER-1024 CRYPTOGRAPHIC HANDSHAKE', delay: 750 },
-  { text: 'CALIBRATING ZERO-LATENCY INTERACTION PIPELINE', delay: 920 },
-  { text: 'ALL SUBSYSTEMS NOMINAL. COMPOSITING HUD MATRIX...', delay: 1100 },
+const BOOT_CHECKPOINTS = [
+  { label: 'CORE SYSTEM', status: 'OK', delay: 150 },
+  { label: 'INTERFACE', status: 'OK', delay: 350 },
+  { label: 'MODULES', status: 'OK', delay: 550 },
+  { label: 'NETWORK', status: 'OK', delay: 750 },
 ];
 
 export const BootSequence: React.FC = () => {
   const { isBooting, setIsBooting, playSound, settings } = useApp();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState<'init' | 'checks' | 'online' | 'done'>('init');
+  const [checkedSteps, setCheckedSteps] = useState<number[]>([]);
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
+
+  useEffect(() => {
+    try {
+      const visited = localStorage.getItem('kryo_nexus_visited_v3');
+      if (visited) {
+        setIsFirstVisit(false);
+      } else {
+        localStorage.setItem('kryo_nexus_visited_v3', 'true');
+        setIsFirstVisit(true);
+      }
+    } catch {
+      // fallback
+    }
+  }, []);
 
   useEffect(() => {
     if (!isBooting) return;
 
-    // Trigger boot sound
     playSound('boot');
+    setPhase('init');
+    setCheckedSteps([]);
 
-    const duration = settings.animationIntensity === 'rapid' ? 800 : settings.animationIntensity === 'minimal' ? 400 : 1600;
-    const intervalTime = 30;
-    const increment = 100 / (duration / intervalTime);
+    // Timing config based on returning user or settings
+    const isRapid = !isFirstVisit || settings.animationIntensity === 'rapid';
+    const initDelay = isRapid ? 200 : 500;
+    const stepDuration = isRapid ? 120 : 260;
+    const onlineDuration = isRapid ? 350 : 700;
 
-    const timer = setInterval(() => {
-      setProgress((prev) => {
-        const next = prev + increment;
-        if (next >= 100) {
-          clearInterval(timer);
-          setTimeout(() => {
-            setIsBooting(false);
-            playSound('success');
-          }, 200);
-          return 100;
-        }
-        return next;
+    const t1 = setTimeout(() => {
+      setPhase('checks');
+      BOOT_CHECKPOINTS.forEach((_, idx) => {
+        setTimeout(() => {
+          setCheckedSteps((prev) => [...prev, idx]);
+          playSound('hover');
+        }, (idx + 1) * stepDuration);
       });
-    }, intervalTime);
+    }, initDelay);
 
-    // Stagger boot log messages
-    BOOT_LOGS.forEach((_, idx) => {
-      setTimeout(() => {
-        setCurrentStep(idx);
-      }, (duration / BOOT_LOGS.length) * idx);
-    });
+    const checksTotalTime = initDelay + BOOT_CHECKPOINTS.length * stepDuration;
 
-    return () => clearInterval(timer);
-  }, [isBooting, settings.animationIntensity]);
+    const t2 = setTimeout(() => {
+      setPhase('online');
+      playSound('success');
+    }, checksTotalTime + 150);
+
+    const t3 = setTimeout(() => {
+      setIsBooting(false);
+    }, checksTotalTime + 150 + onlineDuration);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [isBooting, isFirstVisit, settings.animationIntensity]);
 
   if (!isBooting) return null;
 
@@ -60,90 +78,119 @@ export const BootSequence: React.FC = () => {
       <motion.div
         key="boot-screen"
         initial={{ opacity: 1 }}
-        exit={{ opacity: 0, scale: 1.03, filter: 'blur(8px)' }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        exit={{
+          opacity: 0,
+          scale: 1.04,
+          filter: 'blur(10px)',
+        }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         className="fixed inset-0 z-[9999] bg-[#05070a] text-zinc-100 flex flex-col items-center justify-center p-6 select-none overflow-hidden"
       >
-        {/* Subtle geometric grid frame */}
-        <div className="absolute inset-0 tech-grid-subtle opacity-40 pointer-events-none" />
+        {/* Subtle geometric grid backdrop */}
+        <div className="absolute inset-0 tech-grid-subtle opacity-30 pointer-events-none" />
 
-        {/* Outer cinematic corner brackets */}
-        <div className="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2 border-cyan-500/50" />
-        <div className="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2 border-cyan-500/50" />
-        <div className="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2 border-cyan-500/50" />
-        <div className="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2 border-cyan-500/50" />
+        {/* Ambient Corner Frame HUD brackets */}
+        <div className="absolute top-8 left-8 w-6 h-6 border-t border-l border-cyan-500/40" />
+        <div className="absolute top-8 right-8 w-6 h-6 border-t border-r border-cyan-500/40" />
+        <div className="absolute bottom-8 left-8 w-6 h-6 border-b border-l border-cyan-500/40" />
+        <div className="absolute bottom-8 right-8 w-6 h-6 border-b border-r border-cyan-500/40" />
 
-        {/* Center Boot Terminal Box */}
-        <div className="relative w-full max-w-xl glass-panel rounded-xl p-6 sm:p-8 border border-cyan-500/20 shadow-2xl shadow-cyan-950/40">
+        {/* Primary Terminal Window */}
+        <div className="relative w-full max-w-lg bg-[#0a0d14]/90 border border-zinc-800/90 rounded-2xl p-8 shadow-2xl shadow-black/90 backdrop-blur-xl">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-                <Cpu className="w-5 h-5 animate-pulse" />
+          <div className="flex items-center justify-between border-b border-zinc-800 pb-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                <Cpu className="w-4 h-4" />
               </div>
-              <div>
-                <div className="font-display font-bold text-sm tracking-wider text-white flex items-center gap-2">
-                  KRYO NEXUS OS <span className="text-xs px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono">v4.12</span>
-                </div>
-                <div className="text-xs text-zinc-400 font-mono">AUTONOMOUS SPATIAL KERNEL</div>
-              </div>
+              <span className="font-mono text-xs text-zinc-400 tracking-wider">
+                KRYO OS // INITIALIZATION MATRIX
+              </span>
             </div>
-
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-              <span className="text-xs font-mono text-cyan-400 font-medium">BOOTING</span>
-            </div>
+            <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">
+              v3.0.0
+            </span>
           </div>
 
-          {/* Console Log Stream */}
-          <div className="font-mono text-xs space-y-2 mb-6 min-h-[140px] bg-black/40 rounded-lg p-3.5 border border-zinc-800/60 overflow-hidden">
-            {BOOT_LOGS.slice(0, currentStep + 1).map((log, index) => (
+          {/* Main Stage Animation */}
+          <div className="min-h-[140px] flex flex-col justify-center font-mono">
+            {phase === 'init' && (
               <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.15 }}
-                className="flex items-center gap-2"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 text-cyan-300 text-sm font-semibold"
               >
-                <ChevronRight className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
-                <span className={index === currentStep ? 'text-cyan-300 font-medium' : 'text-zinc-400'}>
-                  {log.text}
-                </span>
-                {index < currentStep && (
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400 ml-auto flex-shrink-0" />
-                )}
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                <span>INITIALIZING KRYO NEXUS...</span>
               </motion.div>
-            ))}
-          </div>
+            )}
 
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs font-mono">
-              <span className="text-zinc-400">INTERFACE COMPILATION</span>
-              <span className="text-cyan-400 font-semibold">{Math.min(100, Math.round(progress))}%</span>
-            </div>
-            <div className="w-full h-2 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800">
+            {phase === 'checks' && (
+              <div className="space-y-2.5">
+                <div className="text-xs text-zinc-500 mb-3 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                  <span>INITIALIZING KRYO NEXUS...</span>
+                </div>
+                {BOOT_CHECKPOINTS.map((chk, idx) => {
+                  const isPassed = checkedSteps.includes(idx);
+                  return (
+                    <motion.div
+                      key={chk.label}
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: isPassed ? 1 : 0.4, x: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="flex items-center justify-between text-xs py-0.5"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ChevronRight className="w-3.5 h-3.5 text-cyan-400/80" />
+                        <span className="text-zinc-300 tracking-wider">{chk.label}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-zinc-600">................</span>
+                        <span
+                          className={`font-semibold ${
+                            isPassed ? 'text-emerald-400' : 'text-zinc-600'
+                          }`}
+                        >
+                          {isPassed ? chk.status : 'PENDING'}
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+
+            {phase === 'online' && (
               <motion.div
-                className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 rounded-full"
-                style={{ width: `${progress}%` }}
-                transition={{ ease: 'linear' }}
-              />
-            </div>
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="text-center py-4 space-y-2"
+              >
+                <div className="text-2xl font-bold font-display text-white tracking-widest">
+                  KRYO NEXUS
+                </div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold tracking-widest shadow-lg shadow-emerald-950/40">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span>ONLINE</span>
+                </div>
+              </motion.div>
+            )}
           </div>
 
-          {/* Interactive Fast Skip CTA */}
-          <div className="mt-6 flex items-center justify-between text-xs pt-3 border-t border-zinc-800/40">
-            <span className="text-zinc-500 font-mono">PRE-WARMING 64 SHADERS</span>
+          {/* Skip Button */}
+          <div className="mt-6 pt-4 border-t border-zinc-800/80 flex items-center justify-between text-[11px] font-mono text-zinc-500">
+            <span>{!isFirstVisit ? 'RETURNING OPERATOR DETECTED' : 'FIRST BOOT PROTOCOL'}</span>
             <button
-              id="boot-skip-button"
+              id="boot-skip-btn"
               onClick={() => {
                 setIsBooting(false);
                 playSound('click');
               }}
-              className="px-3 py-1.5 rounded-lg bg-zinc-800/70 hover:bg-zinc-700 text-zinc-300 hover:text-white font-mono text-xs transition border border-zinc-700/60 active:scale-95 cursor-pointer flex items-center gap-1.5"
+              className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition cursor-pointer"
             >
-              <span>SKIP BOOT</span>
-              <span className="text-[10px] opacity-60">↵</span>
+              SKIP [ESC]
             </button>
           </div>
         </div>

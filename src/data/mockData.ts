@@ -224,6 +224,14 @@ export const SEARCH_INDEX: SearchResultItem[] = [
     iconName: 'Terminal',
   },
   {
+    id: 'sr-command-center',
+    title: 'Command Center & Control Hub',
+    category: 'Navigation',
+    snippet: 'Manage system power governors, edge node routing, neural thread pools, and live event log stream.',
+    sectionId: 'command-center',
+    iconName: 'Command',
+  },
+  {
     id: 'sr-dashboard',
     title: 'Real-Time Telemetry Dashboard',
     category: 'Telemetry',
@@ -302,6 +310,14 @@ export const SEARCH_INDEX: SearchResultItem[] = [
     snippet: 'Adjust 3D tilt strength, animation speeds, UI density, and audio synthesis.',
     actionKey: 'OPEN_SETTINGS',
     iconName: 'Sliders',
+  },
+  {
+    id: 'sr-act-terminal',
+    title: 'Open Interactive Quantum Shell Terminal',
+    category: 'Command Action',
+    snippet: 'Execute operational CLI commands, latency probes, simulation toggles, and matrix inspection.',
+    actionKey: 'OPEN_TERMINAL',
+    iconName: 'Terminal',
   },
   {
     id: 'sr-act-boot',

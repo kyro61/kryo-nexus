@@ -27,6 +27,7 @@ export const HeroSection: React.FC = () => {
     telemetry,
     playSound,
     setIsCommandCenterOpen,
+    setIsTerminalOpen,
     simulateAlert,
     triggerEasterEgg,
   } = useApp();
@@ -176,6 +177,17 @@ export const HeroSection: React.FC = () => {
               onClick={() => setIsCommandCenterOpen(true)}
             >
               COMMAND PALETTE (⌘K)
+            </MagneticButton>
+
+            <MagneticButton
+              id="hero-terminal-cta"
+              variant="ghost"
+              size="md"
+              icon={<Terminal className="w-4 h-4 text-emerald-400" />}
+              iconPosition="left"
+              onClick={() => setIsTerminalOpen(true)}
+            >
+              TERMINAL (T)
             </MagneticButton>
           </motion.div>
         </div>

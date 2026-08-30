@@ -11,6 +11,7 @@ export const GlobalSearchModal: React.FC = () => {
     setIsSearchOpen,
     updateSettings,
     setIsSettingsOpen,
+    setIsTerminalOpen,
     rebootSystem,
     triggerEasterEgg,
     playSound,
@@ -58,6 +59,7 @@ export const GlobalSearchModal: React.FC = () => {
     else if (item.actionKey === 'THEME_LIGHT') updateSettings({ theme: 'light' });
     else if (item.actionKey === 'TRIGGER_OVERCLOCK') triggerEasterEgg();
     else if (item.actionKey === 'OPEN_SETTINGS') setIsSettingsOpen(true);
+    else if (item.actionKey === 'OPEN_TERMINAL') setIsTerminalOpen(true);
     else if (item.actionKey === 'REBOOT_SYSTEM') rebootSystem();
   };
 

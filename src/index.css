@@ -5,10 +5,63 @@
     --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
+
+    /* Theme Tokens (Default Dark Graphite) */
+    --bg: #090a0f;
+    --surface: #0d101a;
+    --surface-2: #141824;
+    --surface-elevated: #1a2030;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-highlight: rgba(6, 182, 212, 0.35);
+    --text: #f4f4f5;
+    --muted: #a1a1aa;
+    --accent: #06b6d4;
+    --accent-glow: rgba(6, 182, 212, 0.2);
+  }
+
+  .theme-oled {
+    --bg: #000000;
+    --surface: #050507;
+    --surface-2: #0b0c10;
+    --surface-elevated: #121318;
+    --border: rgba(255, 255, 255, 0.06);
+    --border-highlight: rgba(6, 182, 212, 0.45);
+    --text: #ffffff;
+    --muted: #888892;
+    --accent: #22d3ee;
+    --accent-glow: rgba(34, 211, 238, 0.25);
+  }
+
+  .theme-midnight {
+    --bg: #050b18;
+    --surface: #091326;
+    --surface-2: #0e1c38;
+    --surface-elevated: #14264c;
+    --border: rgba(56, 189, 248, 0.12);
+    --border-highlight: rgba(56, 189, 248, 0.4);
+    --text: #f0f9ff;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --accent-glow: rgba(56, 189, 248, 0.25);
+  }
+
+  .theme-light {
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --surface-2: #f1f5f9;
+    --surface-elevated: #e2e8f0;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-highlight: rgba(6, 182, 212, 0.5);
+    --text: #09090b;
+    --muted: #64748b;
+    --accent: #0284c7;
+    --accent-glow: rgba(2, 132, 199, 0.15);
   }
 
   body {
     font-family: var(--font-sans);
+    background-color: var(--bg);
+    color: var(--text);
   }
 
   h1, h2, h3, h4, h5, h6, .font-display {

@@ -17,6 +17,8 @@ import { SettingsModal } from './components/SettingsModal';
 import { NotificationCenter } from './components/NotificationCenter';
 import { EasterEggModal } from './components/EasterEggModal';
 import { ScrollProgressBar } from './components/ScrollProgressBar';
+import { ScreenIndicator } from './components/ScreenIndicator';
+import { CommandTerminalModal } from './components/CommandTerminalModal';
 
 function MainExperience() {
   const { settings } = useApp();
@@ -39,6 +41,9 @@ function MainExperience() {
       {/* Scroll Progress Bar at the top */}
       <ScrollProgressBar />
 
+      {/* Subtle Screen Indicator HUD on right edge */}
+      <ScreenIndicator />
+
       {/* Booting Sequence */}
       <BootSequence />
 
@@ -48,7 +53,7 @@ function MainExperience() {
       {/* Floating Cinematic Navigation Bar */}
       <Navbar />
 
-      {/* Main Sections */}
+      {/* Main Screens / Sections */}
       <main className="relative z-10">
         <HeroSection />
         <CommandCenterSection />
@@ -64,6 +69,7 @@ function MainExperience() {
 
       {/* Modals and Overlays */}
       <CommandCenter />
+      <CommandTerminalModal />
       <GlobalSearchModal />
       <SettingsModal />
       <NotificationCenter />

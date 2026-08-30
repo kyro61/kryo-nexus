@@ -28,6 +28,10 @@ interface AppContextType {
   isNotificationsOpen: boolean;
   setIsNotificationsOpen: (open: boolean) => void;
 
+  isTerminalOpen: boolean;
+  setIsTerminalOpen: (open: boolean) => void;
+  toggleTerminal: () => void;
+
   activeModuleDetail: SystemModule | null;
   setActiveModuleDetail: (module: SystemModule | null) => void;
 
@@ -206,10 +210,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [activeModuleDetail, setActiveModuleDetail] = useState<SystemModule | null>(null);
   const [isEasterEggOpen, setIsEasterEggOpen] = useState(false);
   const [isBooting, setIsBooting] = useState(true);
   const [activeSection, setActiveSection] = useState('hero');
+
+  const toggleTerminal = () => {
+    setIsTerminalOpen((prev) => !prev);
+    playSound('switch');
+  };
 
   // 4. Sound helper
   const playSound = (type: 'click' | 'hover' | 'switch' | 'success' | 'boot' | 'overclock' | 'error') => {
@@ -408,8 +418,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     let keyBuffer = '';
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      const isInputFocused = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName);
+
       // Secret Easter Egg Key Tracker: "kryo"
-      if (!['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
+      if (!isInputFocused) {
         keyBuffer = (keyBuffer + e.key.toLowerCase()).slice(-8);
         if (keyBuffer.includes('kryo')) {
           keyBuffer = '';
@@ -425,17 +437,49 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsSearchOpen(false);
         setIsSettingsOpen(false);
         setIsNotificationsOpen(false);
+        setIsTerminalOpen(false);
         playSound('switch');
         return;
       }
 
       // Quick Search shortcut '/'
-      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
+      if (e.key === '/' && !isInputFocused) {
         e.preventDefault();
         setIsSearchOpen(true);
         setIsCommandCenterOpen(false);
+        setIsTerminalOpen(false);
         playSound('switch');
         return;
+      }
+
+      // Interactive Terminal shortcut 'T' (when not in input)
+      if (e.key.toLowerCase() === 't' && !isInputFocused && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setIsTerminalOpen((prev) => !prev);
+        playSound('switch');
+        return;
+      }
+
+      // Quick Navigation Hotkeys: H (Home), S (System/Command), A (Analytics/Telemetry), M (Modules)
+      if (!isInputFocused && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const key = e.key.toLowerCase();
+        let targetId = '';
+        if (key === 'h') targetId = 'hero';
+        else if (key === 's') targetId = 'command-center';
+        else if (key === 'a') targetId = 'dashboard';
+        else if (key === 'm') targetId = 'modules';
+
+        if (targetId) {
+          const el = document.getElementById(targetId);
+          if (el) {
+            const offset = 70;
+            const elementPosition = el.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+            playSound('switch');
+            return;
+          }
+        }
       }
 
       // Escape key closes everything
@@ -445,6 +489,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           isSearchOpen ||
           isSettingsOpen ||
           isNotificationsOpen ||
+          isTerminalOpen ||
           activeModuleDetail ||
           isEasterEggOpen
         ) {
@@ -452,6 +497,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setIsSearchOpen(false);
           setIsSettingsOpen(false);
           setIsNotificationsOpen(false);
+          setIsTerminalOpen(false);
           setActiveModuleDetail(null);
           setIsEasterEggOpen(false);
           playSound('click');
@@ -461,7 +507,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCommandCenterOpen, isSearchOpen, isSettingsOpen, isNotificationsOpen, activeModuleDetail, isEasterEggOpen, settings.soundFx]);
+  }, [isCommandCenterOpen, isSearchOpen, isSettingsOpen, isNotificationsOpen, isTerminalOpen, activeModuleDetail, isEasterEggOpen, settings.soundFx]);
 
   return (
     <AppContext.Provider
@@ -484,6 +530,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsSettingsOpen,
         isNotificationsOpen,
         setIsNotificationsOpen,
+        isTerminalOpen,
+        setIsTerminalOpen,
+        toggleTerminal,
         activeModuleDetail,
         setActiveModuleDetail,
         isEasterEggOpen,

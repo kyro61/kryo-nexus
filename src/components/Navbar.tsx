@@ -15,6 +15,7 @@ import {
   Layers,
   Send,
   Gauge,
+  Terminal,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -27,6 +28,7 @@ export const Navbar: React.FC = () => {
     setIsSearchOpen,
     setIsSettingsOpen,
     setIsNotificationsOpen,
+    setIsTerminalOpen,
     triggerEasterEgg,
     playSound,
     activeSection,
@@ -237,6 +239,19 @@ export const Navbar: React.FC = () => {
               title="Global Search (/)"
             >
               <Search className="w-4 h-4" />
+            </button>
+
+            {/* Interactive Shell / Terminal */}
+            <button
+              id="navbar-terminal-trigger"
+              onClick={() => {
+                playSound('click');
+                setIsTerminalOpen(true);
+              }}
+              className="p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/70 text-zinc-300 hover:text-emerald-400 border border-zinc-700/40 transition active:scale-95 cursor-pointer hidden md:flex"
+              title="Interactive Terminal (T)"
+            >
+              <Terminal className="w-4 h-4" />
             </button>
 
             {/* Notification Bell */}
